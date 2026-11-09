@@ -27,7 +27,7 @@
 - **虚假未封禁**：一键消除真实封禁/冷却的图标显示（仅本地视觉）
 - **虚假延迟**：本地记分板假 ping（0-999999ms）
 
-许可证：与仓库其它内容不同，本脚本使用单独许可证，见 [LICENSE.spoof_hook](LICENSE.spoof_hook)。
+许可证：完全自主开发，适用仓库根目录 CC BY-NC 4.0 许可证，见 [LICENSE](LICENSE)。
 
 ## 配套组件
 
@@ -40,6 +40,14 @@
 1. 将需要的 `.lua` 脚本放入 `C:\neverwin\scripts\`
 2. `helper_data.txt` 放入 `C:\neverwin\scripts\data\`（仅 grenade_helper 需要）
 3. 在 Neverwin 脚本列表中启用，并勾选 **Allow Insecure**
+
+## 许可证
+
+本仓库内容采用 **CC BY-NC 4.0**（署名-非商业性使用），详见 [LICENSE](LICENSE)：
+
+- 转载/二次创作**必须注明出处**（作者 yry4399 + 本仓库链接）
+- **禁止商用**（不得出售、捆绑收费产品或以任何形式收费）
+- 例外：grenade_helper 移植部分权利归 [AMWRV6](https://github.com/Anybody4506/AMWRV6) 原作者；neverlose_core_newad_ffi.dll 权利归其原发行方
 
 ## 致谢
 
