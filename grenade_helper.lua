@@ -43,44 +43,47 @@ local GRENADE_DEF = {
 }
 
 -- ---------------------------------------------------------------------------
--- 界面（Neverwin 平铺式菜单）
+-- 界面（独立标签页：左侧 grenade_helper 组，右侧 点位管理 组）
 -- ---------------------------------------------------------------------------
-ui.label("—— 回放执行 ——")
-local enabled = ui.checkbox("启用", true)
-local execute_key = ui.keybind("执行按键（默认鼠标左键）", 1)
-local smooth = ui.slider_float("瞄准平滑度", 1, 50, 8, "%.0f")
-local position_radius = ui.slider_float("点位半径", 2, 40, 8, "%.0f")
-local show_distance = ui.slider_float("显示距离", 100, 5000, 1200, "%.0f")
-local rec_fov = ui.slider_float("FOV 范围（度，全部点位）", 1, 45, 5, "%.0f")
-local auto_path = ui.checkbox("自动走到最近点位", true)
-local path_range = ui.slider_float("自动寻路范围", 50, 1500, 50, "%.0f")
-local path_center = ui.slider_float("路径中心", 0.1, 4, 0.1, "%.1f")
-local path_settle = ui.slider_float("路径稳定延迟", 0.1, 2.0, 1.0, "%.1f")
+local main_tab = ui.tab("道具助手")
+local main_group = main_tab:group("grenade_helper")
 
-ui.label("—— 显示效果 ——")
-local show_points = ui.checkbox("显示世界标签", true)
-local show_spot_ring = ui.checkbox("显示点位圆环", true)
-local show_fov = ui.checkbox("显示视场圆环", false)
-local show_status = ui.checkbox("显示回放状态", false)
-local bg_color = ui.color("标签背景", color(18, 20, 28, 195), true)
-local glow_color = ui.color("标签光晕", color(255, 120, 70, 200), true)
-local red = ui.color("瞄准点（待机）", color(245, 70, 70, 255))
-local green = ui.color("瞄准点（就绪/播放中）", color(80, 230, 120, 255))
+main_group:label("回放执行")
+local enabled = main_group:checkbox("启用", true)
+local execute_key = main_group:keybind("执行按键（默认鼠标左键）", 1)
+local smooth = main_group:slider_float("瞄准平滑度", 1, 50, 8, "%.0f")
+local position_radius = main_group:slider_float("点位半径", 2, 40, 8, "%.0f")
+local show_distance = main_group:slider_float("显示距离", 100, 5000, 1200, "%.0f")
+local rec_fov = main_group:slider_float("FOV", 1, 45, 5, "%.0f")
+local auto_path = main_group:checkbox("自动走到最近点位", true)
+local path_range = main_group:slider_float("自动寻路范围", 50, 1500, 50, "%.0f")
+local path_center = main_group:slider_float("路径中心", 0.1, 4, 0.1, "%.1f")
+local path_settle = main_group:slider_float("路径稳定延迟", 0.1, 2.0, 1.0, "%.1f")
 
-ui.label("—— 录制 ——")
-local rec_name = ui.text("点位名称")
-local rec_jump = ui.checkbox("跳投", false)
-local rec_walk = ui.checkbox("走投", true)
-local rec_walk_ticks = ui.slider_float("走投时长（tick）", 1, 250, 30, "%.0f")
-local rec_walk_dir = ui.combo("走投方向", { "前", "后", "左", "右" })
-local rec_crouch = ui.checkbox("下蹲", false)
-local rec_throw = ui.combo("投掷模式", { "左键", "双键", "右键" })
+main_group:label("显示效果")
+local show_points = main_group:checkbox("显示世界标签", true)
+local show_spot_ring = main_group:checkbox("显示点位圆环", true)
+local show_fov = main_group:checkbox("显示视场圆环", false)
+local show_status = main_group:checkbox("显示回放状态", false)
+local bg_color = main_group:color("标签背景", color(18, 20, 28, 195), true)
+local glow_color = main_group:color("标签光晕", color(255, 120, 70, 200), true)
+local red = main_group:color("瞄准点（待机）", color(245, 70, 70, 255))
+local green = main_group:color("瞄准点（就绪/播放中）", color(80, 230, 120, 255))
 
-ui.label("—— 管理 ——")
-local rec_recording = ui.checkbox("录制中（宏）", false)
-local rec_save_macro = ui.checkbox("保存录制（宏）", false)
-local rec_save = ui.checkbox("保存当前点位", false)
-local del_save = ui.checkbox("删除瞄准的点位", false)
+main_group:label("录制")
+local rec_name = main_group:text("点位名称")
+local rec_jump = main_group:checkbox("跳投", false)
+local rec_walk = main_group:checkbox("走投", true)
+local rec_walk_ticks = main_group:slider_float("走投时长（tick）", 1, 250, 30, "%.0f")
+local rec_walk_dir = main_group:combo("走投方向", { "前", "后", "左", "右" })
+local rec_crouch = main_group:checkbox("下蹲", false)
+local rec_throw = main_group:combo("投掷模式", { "左键", "双键", "右键" })
+
+main_group:label("录制管理")
+local rec_recording = main_group:checkbox("录制中（宏）", false)
+local rec_save_macro = main_group:checkbox("保存录制（宏）", false)
+local rec_save = main_group:checkbox("保存当前点位", false)
+local del_save = main_group:checkbox("删除瞄准的点位", false)
 
 local rec_save_prev = false
 local rec_save_macro_prev = false
@@ -1667,8 +1670,10 @@ local manage_error_printed = false
 local manage_name = nil
 local manage_filter = nil
 local manage_map = nil
+local manage_search = nil
 local manage_last_filter = 0
 local manage_last_map = ""
+local manage_last_search = ""
 local manage_scroll_dragging = false
 
 local MANAGE_FILTERS = { "全部道具", "烟雾弹", "闪光弹", "高爆手雷", "燃烧弹", "诱饵弹" }
@@ -1726,6 +1731,20 @@ local function point_matches_filter(point, filter)
     return true
 end
 
+local function manage_search_text()
+    if manage_search == nil then return "" end
+    local ok, value = pcall(function() return manage_search:get() end)
+    if ok and type(value) == "string" then return value end
+    return ""
+end
+
+-- 名称包含搜索词即命中（不区分大小写，纯文本匹配）
+local function point_matches_search(point, query)
+    if query == nil or query == "" then return true end
+    local name = tostring(point.name or ""):lower()
+    return name:find(query:lower(), 1, true) ~= nil
+end
+
 local function collect_manage_points()
     local map = manage_selected_map()
     if map == "" then return {}, "", 0 end
@@ -1735,13 +1754,14 @@ local function collect_manage_points()
     end
     local list = lineups[map]
     local filter = manage_filter_index()
+    local query = manage_search_text()
     local out = {}
     local total = 0
     if type(list) == "table" then
         for _, point in ipairs(list) do
             if valid_point(point) then
                 total = total + 1
-                if point_matches_filter(point, filter) then
+                if point_matches_filter(point, filter) and point_matches_search(point, query) then
                     table.insert(out, point)
                 end
             end
@@ -1839,6 +1859,12 @@ local function draw_manage_widget(x, y, w, h, input)
         manage_scroll_dragging = false
         manage_selected_key = nil
     end
+    local query = manage_search_text()
+    if query ~= manage_last_search then
+        manage_last_search = query
+        manage_scroll = 0
+        manage_scroll_dragging = false
+    end
 
     local list_y = y + MANAGE_HEADER_H
     local list_h = h - MANAGE_HEADER_H - MANAGE_FOOTER_H
@@ -1868,8 +1894,14 @@ local function draw_manage_widget(x, y, w, h, input)
     render.rect(x, y, w, h, color(58, 64, 78, 200), 6, 1)
 
     local filter_name = MANAGE_FILTERS[filter + 1] or MANAGE_FILTERS[1]
-    local title = string.format("%s · %s · %d / %d 个点位",
-        (map ~= "" and map or "未知地图"), filter_name, #points, total)
+    local title
+    if query ~= "" then
+        title = string.format("%s · %s · 搜索\"%s\" · %d / %d",
+            (map ~= "" and map or "未知地图"), filter_name, query, #points, total)
+    else
+        title = string.format("%s · %s · %d / %d 个点位",
+            (map ~= "" and map or "未知地图"), filter_name, #points, total)
+    end
     render.text(x + 8, y + 7, color(224, 228, 238, 255),
         fit_text(title, w - 16, 12), nil, 12)
 
@@ -1913,7 +1945,11 @@ local function draw_manage_widget(x, y, w, h, input)
 
     if #points == 0 then
         local empty_text = "该地图暂无点位，可切换地图"
-        if total > 0 then empty_text = "此分类下暂无点位，可切换到“全部道具”" end
+        if query ~= "" then
+            empty_text = string.format("没有匹配 \"%s\" 的点位", query)
+        elseif total > 0 then
+            empty_text = "此分类下暂无点位，可切换到“全部道具”"
+        end
         render.text(x + 8, list_y + 8, color(140, 146, 160, 255), empty_text, nil, 12)
         local footer_empty = string.format("滚轮/拖动滚动条 · 0 / %d", total)
         render.text(x + 8, y + h - MANAGE_FOOTER_H + 2, color(128, 134, 148, 255), footer_empty, nil, 11)
@@ -2005,12 +2041,14 @@ local function draw_manage_widget(x, y, w, h, input)
     render.text(x + 8, y + h - MANAGE_FOOTER_H + 2, color(128, 134, 148, 255), footer, nil, 11)
 end
 
-ui.label("点位管理")
+-- 右侧独立组：点位管理
+local manage_group = main_tab:group("点位管理")
 refresh_manage_map_items()
-manage_map = ui.combo("地图选择", manage_map_items)
-manage_filter = ui.combo("道具分类", MANAGE_FILTERS)
-manage_name = ui.text("点位管理 · 新名称（先点行载入）")
-ui.custom("点位管理列表（滚轮翻页 / 行内改名与删除）", 430, function(x, y, w, h, input)
+manage_map = manage_group:combo("地图选择", manage_map_items)
+manage_filter = manage_group:combo("道具分类", MANAGE_FILTERS)
+manage_search = manage_group:text("搜索点位名称")
+manage_name = manage_group:text("新名称")
+manage_group:custom("点位列表（滚轮翻页 / 行内改名与删除）", 430, function(x, y, w, h, input)
     local ok, err = pcall(draw_manage_widget, x, y, w, h, input)
     if not ok and not manage_error_printed then
         manage_error_printed = true
