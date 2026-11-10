@@ -14,6 +14,9 @@
 
 local ffi = rawget(_G, "ffi")
 
+print("制作者 Awa Subaru")
+print("闲鱼：我是学生你懂我意思吧")
+
 local MOD = "client.dll"
 
 -- 特征码 -> rip 相对全局（2026-11-05 版本实测命中）
@@ -51,8 +54,12 @@ local RANK_NAMES = {
 -- ---------------------------------------------------------------------------
 -- UI
 -- ---------------------------------------------------------------------------
+-- 侧边栏显示名 + 图标（本构建可用图标见 core dll 的 lua_icon_* 表，共 21 种）
+local ok_sidebar = pcall(ui.sidebar, "Fake misc", "wrench")
+if not ok_sidebar then pcall(ui.sidebar, "Fake misc") end
+
 local tab = ui.tab("虚假")
-local g = tab:group("主菜单伪造")
+local g = tab:group("伪造功能")
 
 local en_level = g:checkbox("虚假等级", false)
 local ui_level = g:slider_float("等级", 1, 40, 40, "%.0f")
@@ -76,6 +83,54 @@ local ui_ban = g:combo("封禁类型", { "VAC 封禁", "游戏封禁" })
 local en_unban  = g:checkbox("虚假未封禁（消除封禁/冷却）", false)
 local en_ping   = g:checkbox("虚假延迟", false)
 local ui_ping   = g:slider_float("延迟 (ms)", 0, 999999, 5, "%.0f")
+
+-- 状态组：insecure 状态 + 一键重载 + 作者信息 + 闲鱼链接
+local g_status = tab:group("状态")
+local insecure_chk = g_status:checkbox("Allow Insecure（允许不安全模式）", client.insecure())
+g_status:label("当前 Allow Insecure：" .. (client.insecure() and "已开启" or "未开启"))
+g_status:button("应用并立即重载脚本", function()
+    pcall(function() config.set("lua.allow_insecure", insecure_chk:get()) end)
+    pcall(function() client.reload() end)
+end)
+g_status:label("Awa Subaru制作")
+-- 系统浏览器打开 URL（全局 ffi → ffi.C → ffi.load 兜底链）
+local shexec_fm
+local function init_shexec_fm()
+    if shexec_fm ~= nil then return end
+    if type(ffi) ~= "table" or type(ffi.cdef) ~= "function" then
+        shexec_fm = false
+        return
+    end
+    pcall(ffi.cdef, [[
+        void * __stdcall ShellExecuteA(void *hwnd, const char *op, const char *file,
+                                       const char *params, const char *dir, int show);
+    ]])
+    local fn
+    pcall(function() fn = ffi.C.ShellExecuteA end)
+    if not fn then
+        local ns
+        pcall(function() ns = ffi.load("Shell32") end)
+        if ns then pcall(function() fn = ns.ShellExecuteA end) end
+    end
+    shexec_fm = fn or false
+end
+local function open_url_fm(url)
+    init_shexec_fm()
+    if shexec_fm then
+        local ok, err = pcall(function() return shexec_fm(nil, "open", url, nil, nil, 1) end)
+        if ok then return end
+        print("[Fake misc] ShellExecuteA 调用失败: " .. tostring(err))
+    elseif shexec_fm == false then
+        print("[Fake misc] ffi 不可用（需开启 Allow Insecure），走 Steam 覆盖层回退")
+    end
+    local ok2, err2 = pcall(function() panorama.SteamOverlayAPI.OpenExternalBrowserURL(url) end)
+    if not ok2 then
+        print("[Fake misc] Steam 覆盖层打开也失败: " .. tostring(err2))
+    end
+end
+g_status:button("闲鱼:我是学生你懂我意思吧", function()
+    open_url_fm("https://m.tb.cn/h.jS7Zhk2?tk=ZYFI6cX5T4D")
+end)
 
 -- ---------------------------------------------------------------------------
 -- 地址解析
@@ -135,8 +190,6 @@ local function resolve()
     addr_level = addr_banA + 8
     addr_xp    = addr_banA + 0xC
 
-    print(string.format("[spoof_hook] flags=0x%X cd_end=0x%X banA=0x%X cd_type=0x%X level=0x%X",
-        addr_flags, addr_cdend, addr_banA, addr_cdt, addr_level))
     return true
 end
 
