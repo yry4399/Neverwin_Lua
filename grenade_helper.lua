@@ -43,51 +43,42 @@ local GRENADE_DEF = {
 }
 
 -- ---------------------------------------------------------------------------
--- 界面（独立标签页：左侧 grenade_helper 组，右侧 点位管理 组）
+ui.sidebar("道具助手", "gear")
+print("Awa Subaru制作")
+print("闲鱼:我是学生你懂我意思吧")
+
+-- 界面（独立标签页：左列 回放中心/手动创建点位/录制，右列 显示效果/点位管理/状态）
 -- ---------------------------------------------------------------------------
 local main_tab = ui.tab("道具助手")
-local main_group = main_tab:group("grenade_helper")
 
-main_group:label("回放执行")
-local enabled = main_group:checkbox("启用", true)
-local execute_key = main_group:keybind("执行按键（默认鼠标左键）", 1)
-local smooth = main_group:slider_float("瞄准平滑度", 1, 50, 8, "%.0f")
-local position_radius = main_group:slider_float("点位半径", 2, 40, 8, "%.0f")
-local show_distance = main_group:slider_float("显示距离", 100, 5000, 1200, "%.0f")
-local rec_fov = main_group:slider_float("FOV", 1, 45, 5, "%.0f")
-local auto_path = main_group:checkbox("自动走到最近点位", true)
-local path_range = main_group:slider_float("自动寻路范围", 50, 1500, 50, "%.0f")
-local path_center = main_group:slider_float("路径中心", 0.1, 4, 0.1, "%.1f")
-local path_settle = main_group:slider_float("路径稳定延迟", 0.1, 2.0, 1.0, "%.1f")
+-- 回放中心组（左列，第 1 组）
+local pb_group = main_tab:group("回放中心")
+local enabled = pb_group:checkbox("启用", true)
+local execute_key = pb_group:keybind("执行按键（默认鼠标左键）", 1)
+local smooth = pb_group:slider_float("瞄准平滑度", 1, 50, 8, "%.0f")
+local position_radius = pb_group:slider_float("点位半径", 2, 40, 8, "%.0f")
+local show_distance = pb_group:slider_float("显示距离", 100, 5000, 1200, "%.0f")
+local rec_fov = pb_group:slider_float("FOV", 1, 180, 5, "%.0f")
+local auto_path = pb_group:checkbox("自动走到最近点位", true)
+local path_range = pb_group:slider_float("自动寻路范围", 50, 1500, 50, "%.0f")
+local path_center = pb_group:slider_float("路径中心", 0.1, 4, 0.1, "%.1f")
+local path_settle = pb_group:slider_float("路径稳定延迟", 0.1, 2.0, 1.0, "%.1f")
 
-main_group:label("显示效果")
-local show_points = main_group:checkbox("显示世界标签", true)
-local show_spot_ring = main_group:checkbox("显示点位圆环", true)
-local show_fov = main_group:checkbox("显示视场圆环", false)
-local show_status = main_group:checkbox("显示回放状态", false)
-local bg_color = main_group:color("标签背景", color(18, 20, 28, 195), true)
-local glow_color = main_group:color("标签光晕", color(255, 120, 70, 200), true)
-local red = main_group:color("瞄准点（待机）", color(245, 70, 70, 255))
-local green = main_group:color("瞄准点（就绪/播放中）", color(80, 230, 120, 255))
+-- 显示效果组（右列，第 2 组）
+local disp_group = main_tab:group("显示效果")
+local show_points = disp_group:checkbox("显示世界标签", true)
+local show_spot_ring = disp_group:checkbox("显示点位圆环", true)
+local show_fov = disp_group:checkbox("显示视场圆环", false)
+local show_status = disp_group:checkbox("显示回放状态", false)
+local bg_color = disp_group:color("标签背景", color(18, 20, 28, 195), true)
+local glow_color = disp_group:color("标签光晕", color(255, 120, 70, 200), true)
+local red = disp_group:color("瞄准点（待机）", color(245, 70, 70, 255))
+local green = disp_group:color("瞄准点（就绪/播放中）", color(80, 230, 120, 255))
 
-main_group:label("录制")
-local rec_name = main_group:text("点位名称")
-local rec_jump = main_group:checkbox("跳投", false)
-local rec_walk = main_group:checkbox("走投", true)
-local rec_walk_ticks = main_group:slider_float("走投时长（tick）", 1, 250, 30, "%.0f")
-local rec_walk_dir = main_group:combo("走投方向", { "前", "后", "左", "右" })
-local rec_crouch = main_group:checkbox("下蹲", false)
-local rec_throw = main_group:combo("投掷模式", { "左键", "双键", "右键" })
-
-main_group:label("录制管理")
-local rec_recording = main_group:checkbox("录制中（宏）", false)
-local rec_save_macro = main_group:checkbox("保存录制（宏）", false)
-local rec_save = main_group:checkbox("保存当前点位", false)
-local del_save = main_group:checkbox("删除瞄准的点位", false)
-
-local rec_save_prev = false
-local rec_save_macro_prev = false
-local del_save_prev = false
+-- 录制/手动点位控件：前向声明（控件创建在逻辑函数之后，逻辑函数以 upvalue 引用）
+local rec_name, rec_jump, rec_walk, rec_walk_ticks, rec_walk_dir, rec_crouch, rec_throw
+local rec_recording, rec_save_macro, rec_save, del_save
+local rec_prev = { save = false, macro = false, del = false }
 
 -- ---------------------------------------------------------------------------
 -- 通用工具
@@ -266,14 +257,11 @@ local path_phase = "none"
 local path_settle_ticks = 0
 local path_stuck_ticks = 0
 local path_last_nd = 1e9
-local path_target = nil
-local path_target_key = nil
-local path_wish_yaw = nil
-local path_skip_key = nil
-local path_skip_until = 0
-local path_frames = 0
+local macro_diag = nil  -- 临时诊断：宏播放帧移动量统计
 
 local rec_on_prev = false
+local rec_key_prev = false   -- 绑键上一帧物理按下状态
+local rec_on_latch = false   -- 录制开关锁存（按一下开、再按一下关）
 local rec_waiting = false
 local rec_active = false
 local rec_buf = {}
@@ -693,8 +681,16 @@ local function commit_recording_buffer()
 end
 
 local function update_recording(cmd, pawn)
-    local on = false
-    pcall(function() on = rec_recording:get() end)
+    -- 绑键统一当"按一下切换"处理：只在按下瞬间翻转锁存，
+    -- 绑定无论设为按住(hold)还是切换(toggle)模式，行为一致
+    local down = false
+    pcall(function() down = rec_recording:active() end)  -- keybind 状态用 :active()（:get() 返回键码）
+    if down and not rec_key_prev then
+        rec_on_latch = not rec_on_latch
+    end
+    rec_key_prev = down
+
+    local on = rec_on_latch
     if on and not rec_on_prev then
         rec_waiting = true
         rec_active = false
@@ -940,7 +936,7 @@ local function write_walk(cmd, point)
         side = spd
         buttons = bit.bor(buttons, IN_MOVELEFT)
     else
-        side = -spd
+        side = spd
         buttons = bit.bor(buttons, IN_MOVERIGHT)
     end
     pcall(function() cmd:set_move(fwd, side) end)
@@ -971,30 +967,12 @@ local function write_approach(cmd, pawn, point, snap)
         cmd_set_buttons(cmd, clear_controlled_buttons(cmd_buttons(cmd)))
         return true
     end
-    -- 用本 tick 实际生效的视角（cmd 角度），避免渲染插值视角导致方向抖动
     local view = camera_view()
-    do
-        local ok, v = pcall(function() return cmd:view_angles() end)
-        if ok and v ~= nil then
-            local p = tonumber(v.x)
-            local y = tonumber(v.y)
-            if p ~= nil and y ~= nil then view = { pitch = p, yaw = y } end
-        end
-    end
     local wish = math.deg(math.atan2(dy, dx))
-    -- 平滑世界朝向：避免目标抖动/鼠标微动导致每 tick 反向，走不动甚至原地打转
-    if path_wish_yaw == nil then
-        path_wish_yaw = wish
-    else
-        local delta = normalize_yaw(wish - path_wish_yaw)
-        local max_turn = 25
-        if delta > max_turn then delta = max_turn elseif delta < -max_turn then delta = -max_turn end
-        path_wish_yaw = normalize_yaw(path_wish_yaw + delta)
-    end
-    local yd = normalize_yaw(path_wish_yaw - view.yaw) * math.pi / 180
+    local yd = normalize_yaw(wish - view.yaw) * math.pi / 180
     local scale = 1
-    if dist < 10 then
-        scale = math.max(0.25, dist / 10)
+    if dist < 8 then
+        scale = math.max(0.15, dist / 8)
     end
     pcall(function() cmd:set_move(math.cos(yd) * scale, math.sin(yd) * scale) end)
     pcall(function() cmd:set_upmove(0) end)
@@ -1012,6 +990,14 @@ local function write_macro(cmd)
     if frame == nil then return end
     apply_view(cmd, frame.pitch, frame.yaw)
     pcall(function() cmd:set_move(frame.forwardmove or 0, frame.sidemove or 0) end)
+    -- 临时诊断：统计宏帧移动量，定位“点按式慢走”
+    if macro_diag then
+        local m = math.abs(frame.forwardmove or 0) + math.abs(frame.sidemove or 0)
+        if m < 0.05 then macro_diag.zeros = macro_diag.zeros + 1 end
+        if m > macro_diag.max then macro_diag.max = m end
+        macro_diag.sum = macro_diag.sum + m
+        macro_diag.n = macro_diag.n + 1
+    end
     pcall(function() cmd:set_upmove(0) end)
     local buttons = clear_controlled_buttons(cmd_buttons(cmd))
     buttons = bit.band(buttons, bit.bnot(IN_USE))
@@ -1058,7 +1044,22 @@ local function start_macro(point)
     active = point
     state = "macro"
     stable_ticks = 0
-    playback_tick = 0
+    -- 跳过录制前导的静止瞄准段：aim 阶段已完成对准，
+    -- 从第一个有动作（攻击/移动/跳跃/明显转视角）的帧开始播放，
+    -- 否则回放会把录制时站立瞄准的一两秒也完整重放（表现为慢/卡顿）
+    local start_i = 1
+    local p0, y0 = cmds[1].pitch or 0, cmds[1].yaw or 0
+    for i = 1, math.max(#cmds - 1, 1) do
+        local f = cmds[i]
+        local moving = math.abs(f.forwardmove or 0) > 0.05 or math.abs(f.sidemove or 0) > 0.05
+        local turning = math.abs((f.pitch or p0) - p0) + math.abs(normalize_yaw((f.yaw or y0) - y0)) > 0.5
+        if f.in_attack or f.in_attack2 or f.in_jump or moving or turning then
+            start_i = i
+            break
+        end
+    end
+    playback_tick = start_i - 1  -- 播放循环每 tick 先 +1，减 1 使首帧落在 start_i
+    macro_diag = { zeros = 0, max = 0, sum = 0, n = 0 }  -- 临时诊断
     return true
 end
 
@@ -1083,11 +1084,6 @@ local function update_playback(cmd, pawn, map, weapon)
         path_settle_ticks = 0
         path_stuck_ticks = 0
         path_last_nd = 1e9
-        path_target = nil
-        path_target_key = nil
-        path_wish_yaw = nil
-        path_skip_key = nil
-        path_skip_until = 0
         label_alphas = {}
     end
 
@@ -1107,75 +1103,33 @@ local function update_playback(cmd, pawn, map, weapon)
         end)
         local rad = position_radius:get()
 
-        -- 自动寻路途中不要被路径上顺带经过的其他点位抢走触发
-        local auto_walking = auto_path:get()
-            and path_target ~= nil
-            and (path_phase == "walk" or path_phase == "settle")
-
-        if candidate and is_execute_down()
-            and not (auto_walking and candidate ~= path_target) then
+        if candidate and is_execute_down() then
             path_phase = "none"
             path_settle_ticks = 0
             path_stuck_ticks = 0
-            path_target = nil
-            path_target_key = nil
-            path_wish_yaw = nil
             start_aim(cmd, candidate)
             return
         end
 
         if auto_path:get() and is_execute_down() then
-            local snap = math.max(tonumber(path_center:get()) or 0.1, 0.75)
-            -- 停脚距离：不能小于 2 单位，否则高速走位会反复冲过点位造成一卡一卡
-            local arrive = math.max(snap, 2.0)
-            local leave = math.max(arrive + 3, rad + 2)
-            path_frames = path_frames + 1
-            if path_skip_until > 0 and path_frames > path_skip_until then
-                path_skip_key = nil
-                path_skip_until = 0
-            end
+            local snap = tonumber(path_center:get()) or 0.5
+            local leave = math.max(snap + 3, rad + 2)
 
-            -- 行走中锁定目标点位，避免两个相近点位之间来回切换导致抖动/绕圈
-            local near, nd = nil, 1e9
-            if path_phase == "walk" and path_target ~= nil and valid_point(path_target)
-                and weapon_matches(path_target.weapon, weapon) then
-                near = path_target
-                nd = distance_xy(pawn:origin(), point_position(near))
-                if nd > path_range:get() * 1.5 then near = nil end
-            end
-            if near == nil then
-                near, nd = find_nearest(pawn, map, weapon, path_range:get(), path_skip_key)
-                if near ~= nil and path_target ~= nil and valid_point(path_target)
-                    and weapon_matches(path_target.weapon, weapon)
-                    and point_label_key(path_target) ~= path_skip_key then
-                    local keep_d = distance_xy(pawn:origin(), point_position(path_target))
-                    -- 原目标只比最近点远一点点时保持不变（迟滞）
-                    if keep_d <= path_range:get() and keep_d <= nd + 12 then
-                        near, nd = path_target, keep_d
-                    end
-                end
-            end
-            if near == nil then
-                path_target = nil
-                path_target_key = nil
-                path_wish_yaw = nil
-            elseif path_target_key ~= point_label_key(near) then
-                path_target = near
-                path_target_key = point_label_key(near)
-                path_wish_yaw = nil
-            end
+            local near, nd = find_nearest(pawn, map, weapon, path_range:get())
 
             if not near then
                 path_phase = "none"
                 path_settle_ticks = 0
                 path_stuck_ticks = 0
             elseif path_phase == "ready" then
-                if nd > leave then
-                    path_phase = "walk"
-                    path_settle_ticks = 0
-                    path_stuck_ticks = 0
-                    path_last_nd = nd
+                -- 对齐原版：停稳后立即对寻路目标执行，不等待视角 FOV 对准；
+                -- 不在点位半径内则退出寻路状态，下帧重新走判定
+                if nd <= rad then
+                    path_phase = "none"
+                    start_aim(cmd, near)
+                    return
                 end
+                path_phase = "none"
             elseif path_phase == "settle" then
                 if nd > leave then
                     path_phase = "walk"
@@ -1195,7 +1149,7 @@ local function update_playback(cmd, pawn, map, weapon)
                     return
                 end
             else
-                local close_enough = nd <= arrive
+                local close_enough = nd <= snap
                 if path_phase == "walk" then
                     if nd < path_last_nd - 0.15 then
                         path_stuck_ticks = 0
@@ -1205,27 +1159,13 @@ local function update_playback(cmd, pawn, map, weapon)
                     end
                     if nd <= rad and path_stuck_ticks > 24 then
                         close_enough = true
-                    elseif nd > rad and path_stuck_ticks > 150 and pawn_speed(pawn) < 40 then
-                        -- 长时间靠近不了且几乎没在移动（被墙挡住/在另一层），暂时跳过该点位
-                        path_skip_key = point_label_key(near)
-                        path_skip_until = path_frames + 300
-                        path_phase = "none"
-                        path_settle_ticks = 0
-                        path_stuck_ticks = 0
-                        path_target = nil
-                        path_target_key = nil
-                        path_wish_yaw = nil
-                        pcall(function() cmd:set_move(0, 0) end)
-                        pcall(function() cmd:set_upmove(0) end)
-                        cmd_set_buttons(cmd, clear_controlled_buttons(cmd_buttons(cmd)))
-                        return
                     end
                 end
 
-                if not close_enough and nd > arrive then
+                if not close_enough and nd > snap then
                     path_phase = "walk"
                     if path_last_nd > nd + 50 then path_last_nd = nd end
-                    write_approach(cmd, pawn, near, arrive)
+                    write_approach(cmd, pawn, near, snap)
                     return
                 elseif path_phase == "walk" and close_enough then
                     path_phase = "settle"
@@ -1243,9 +1183,6 @@ local function update_playback(cmd, pawn, map, weapon)
             path_phase = "none"
             path_settle_ticks = 0
             path_stuck_ticks = 0
-            path_target = nil
-            path_target_key = nil
-            path_wish_yaw = nil
         end
         return
     end
@@ -1259,6 +1196,11 @@ local function update_playback(cmd, pawn, map, weapon)
         playback_tick = playback_tick + 1
         local cmds = active._macro_cmds
         if type(cmds) ~= "table" or playback_tick > #cmds then
+            if macro_diag and macro_diag.n > 0 then
+                print(string.format("[道具助手] 宏诊断: 播放%d帧 零移动帧=%d 最大移动量=%.2f 平均=%.2f",
+                    macro_diag.n, macro_diag.zeros, macro_diag.max, macro_diag.sum / macro_diag.n))
+            end
+            macro_diag = nil
             reset_playback()
             await_key_release = true
         end
@@ -1501,8 +1443,9 @@ end
 local function draw_aim_target(pawn, point, is_playing, in_fov, alpha, view)
     local x, y = lineup_dot_screen_xy(pawn, point, view)
 
-    local ar, ag, ab = red:get()
-    if is_playing or in_fov then ar, ag, ab = green:get() end
+    local ac = red:get()
+    if is_playing or in_fov then ac = green:get() end
+    local ar, ag, ab = ac.r, ac.g, ac.b
 
     local title = point.name or "点位"
     local _, label_h = measure_label(title, "")
@@ -1526,7 +1469,7 @@ local function save_manual_spot()
     if ctx == nil then
         print("[手雷助手] 保存失败：保存前需手持道具")
         rec_save:set(false)
-        rec_save_prev = false
+        rec_prev.save = false
         return
     end
     local name = spot_name()
@@ -1536,8 +1479,6 @@ local function save_manual_spot()
         print("[手雷助手] 写入失败：请开启 insecure 权限")
     end
     reload_lineups()
-    rec_save:set(false)
-    rec_save_prev = false
     print(string.format("[手雷助手] 已保存点位 \"%s\" 在 %s", name, ctx.map))
     if rec_walk:get() then
         print(string.format("[手雷助手] 走投: tick=%d 方向=%d", math.floor(rec_walk_ticks:get()), rec_walk_dir:get()))
@@ -1548,27 +1489,21 @@ local function save_macro_spot()
     if rec_active or rec_waiting then
         commit_recording_buffer()
         rec_on_prev = false
-        pcall(function() rec_recording:set(false) end)
+        rec_on_latch = false
     end
     if type(rec_ready_frames) ~= "table" or #rec_ready_frames == 0 or rec_ready_meta == nil then
-        print("[手雷助手] 保存录制失败：请先 录制开 → 投掷 → 关闭")
-        rec_save_macro:set(false)
-        rec_save_macro_prev = false
+        print("[手雷助手] 保存录制失败：请先开启录制并投掷后再保存")
         return
     end
     local ctx = get_macro_record_context()
     if ctx == nil then
         print("[手雷助手] 保存录制失败：缺少录制数据")
-        rec_save_macro:set(false)
-        rec_save_macro_prev = false
         return
     end
     local name = spot_name()
     local ok, entry = pcall(build_macro_entry, ctx, name, rec_ready_frames)
     if not ok or type(entry) ~= "string" then
         print("[手雷助手] 保存录制失败: " .. tostring(entry))
-        rec_save_macro:set(false)
-        rec_save_macro_prev = false
         return
     end
     local text = insert_point_entry(read_data_file(), ctx.map, entry)
@@ -1576,8 +1511,6 @@ local function save_macro_spot()
         print("[手雷助手] 写入失败：请开启 insecure 权限")
     end
     reload_lineups()
-    rec_save_macro:set(false)
-    rec_save_macro_prev = false
     print(string.format("[手雷助手] 已保存录制 \"%s\" 在 %s（%d 帧）", name, ctx.map, #rec_ready_frames))
     rec_ready_frames = nil
     rec_ready_meta = nil
@@ -1633,27 +1566,7 @@ local function delete_nearest_spot()
     end
     if active == target then reset_playback() end
     reload_lineups()
-    del_save:set(false)
-    del_save_prev = false
     print(string.format("[手雷助手] 已删除点位 \"%s\"（%.1f 单位）", target.name or "点位", target_d))
-end
-
-local function handle_record_toggle()
-    local cur = rec_save:get()
-    if cur and not rec_save_prev then save_manual_spot() end
-    rec_save_prev = cur
-end
-
-local function handle_macro_save_toggle()
-    local cur = rec_save_macro:get()
-    if cur and not rec_save_macro_prev then save_macro_spot() end
-    rec_save_macro_prev = cur
-end
-
-local function handle_delete_toggle()
-    local cur = del_save:get()
-    if cur and not del_save_prev then delete_nearest_spot() end
-    del_save_prev = cur
 end
 
 -- ---------------------------------------------------------------------------
@@ -2041,7 +1954,17 @@ local function draw_manage_widget(x, y, w, h, input)
     render.text(x + 8, y + h - MANAGE_FOOTER_H + 2, color(128, 134, 148, 255), footer, nil, 11)
 end
 
--- 右侧独立组：点位管理
+-- 手动创建点位组（左列，第 3 组）：保存当前点位 + 投掷方式（变量已在文件头前向声明）
+local manual_group = main_tab:group("手动创建点位")
+rec_jump = manual_group:checkbox("跳投", false)
+rec_walk = manual_group:checkbox("走投", true)
+rec_walk_ticks = manual_group:slider_float("走投时长（tick）", 1, 250, 30, "%.0f")
+rec_walk_dir = manual_group:combo("走投方向", { "前", "后", "左", "右" })
+rec_crouch = manual_group:checkbox("下蹲", false)
+rec_throw = manual_group:combo("投掷模式", { "左键", "双键", "右键" })
+rec_save = manual_group:button("在当前位置创建点位", function() save_manual_spot() end)
+
+-- 点位管理组（右列，第 4 组）
 local manage_group = main_tab:group("点位管理")
 refresh_manage_map_items()
 manage_map = manage_group:combo("地图选择", manage_map_items)
@@ -2055,6 +1978,72 @@ manage_group:custom("点位列表（滚轮翻页 / 行内改名与删除）", 43
         print("[手雷助手] 管理列表绘制失败: " .. tostring(err))
     end
 end)
+
+-- 录制组（左列，第 5 组）：宏录制
+local rec_group = main_tab:group("录制")
+rec_name = rec_group:text("点位名称")
+rec_recording = rec_group:keybind("开启录制")
+rec_save_macro = rec_group:button("保存点位", function() save_macro_spot() end)
+del_save = rec_group:button("删除瞄准的点位", function() delete_nearest_spot() end)
+
+-- 状态组（右列，点位管理组下方）：insecure 状态 + 一键重载 + 作者信息
+-- 用 loadstring 独立 chunk 构建：主函数 local 已达 200 编译上限，不能新增 local
+if type(loadstring) == "function" then
+    if not pcall(loadstring([==[
+local main_tab = ...
+-- 状态组：insecure 状态 + 一键重载 + 作者信息 + 闲鱼链接
+local g_status = main_tab:group("状态")
+local insecure_chk = g_status:checkbox("Allow Insecure（允许不安全模式）", client.insecure())
+g_status:label("当前 Allow Insecure：" .. (client.insecure() and "已开启" or "未开启"))
+g_status:button("应用并立即重载脚本", function()
+    pcall(function() config.set("lua.allow_insecure", insecure_chk:get()) end)
+    pcall(function() client.reload() end)
+end)
+g_status:label("Awa Subaru制作")
+-- 系统浏览器打开 URL（全局 ffi → ffi.C → ffi.load 兜底链）
+local shexec
+local function init_shexec()
+    if shexec ~= nil then return end
+    if type(ffi) ~= "table" or type(ffi.cdef) ~= "function" then
+        shexec = false
+        return
+    end
+    pcall(ffi.cdef, [[
+        void * __stdcall ShellExecuteA(void *hwnd, const char *op, const char *file,
+                                       const char *params, const char *dir, int show);
+    ]])
+    local fn
+    pcall(function() fn = ffi.C.ShellExecuteA end)
+    if not fn then
+        local ns
+        pcall(function() ns = ffi.load("Shell32") end)
+        if ns then pcall(function() fn = ns.ShellExecuteA end) end
+    end
+    shexec = fn or false
+end
+local function open_url(url)
+    init_shexec()
+    if shexec then
+        local ok, err = pcall(function() return shexec(nil, "open", url, nil, nil, 1) end)
+        if ok then return end
+        print("[道具助手] ShellExecuteA 调用失败: " .. tostring(err))
+    elseif shexec == false then
+        print("[道具助手] ffi 不可用（需开启 Allow Insecure），走 Steam 覆盖层回退")
+    end
+    local ok2, err2 = pcall(function() panorama.SteamOverlayAPI.OpenExternalBrowserURL(url) end)
+    if not ok2 then
+        print("[道具助手] Steam 覆盖层打开也失败: " .. tostring(err2))
+    end
+end
+g_status:button("闲鱼:我是学生你懂我意思吧", function()
+    open_url("https://m.tb.cn/h.jS7Zhk2?tk=ZYFI6cX5T4D")
+end)
+]==]), main_tab) then
+        print("[手雷助手] 状态组构建失败")
+    end
+else
+    print("[手雷助手] loadstring 不可用，状态组跳过")
+end
 
 -- ---------------------------------------------------------------------------
 -- 回调
@@ -2077,10 +2066,6 @@ events.on("createmove", function(cmd)
 end)
 
 events.on("paint", function()
-    handle_record_toggle()
-    handle_macro_save_toggle()
-    handle_delete_toggle()
-
     if rec_active or rec_waiting then
         local msg = "录制中：保持静止..."
         if rec_active then
@@ -2105,8 +2090,10 @@ events.on("paint", function()
 
     local origin = pawn:origin()
     local view = camera_view()
-    local rr, rg, rb = red:get()
-    local gr, gg, gb = green:get()
+    local rc = red:get()
+    local gc = green:get()
+    local rr, rg, rb = rc.r, rc.g, rc.b
+    local gr, gg, gb = gc.r, gc.g, gc.b
     local show_limit = show_distance:get()
     local fade_start = show_limit * 0.82
     local fade_end = show_limit * 1.06

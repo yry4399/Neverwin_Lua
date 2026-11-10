@@ -9,11 +9,23 @@
 由 [AMWRV6 - Grenade Helper](https://github.com/Anybody4506/AMWRV6/blob/main/Grenade%20Helper) 移植、修复并改动而来（原作基于 Aimware 平台）。
 
 - **回放执行**：按住执行按键自动瞄准点位视角并投掷（站投 / 跳投 / 走投 / 蹲投 / 宏点位），支持左键/双键/右键投掷模式
-- **自动寻路**：自动走到最近的匹配点位，目标锁定、高度差加权、卡住自动跳过
-- **世界标签**：3D 点位名称 + 距离显示、点位圆环、FOV 范围圆环、回放状态显示
-- **录制**：保存当前点位（名称/跳投/走投方向与时长/投掷模式）、宏录制（逐帧 usercmd 回放）
+- **自动寻路**：寻路/停脚/投掷时序已对齐原版 AW 实现，自动走到最近点位并停稳执行
+- **世界标签**：3D 点位名称 + 距离显示、点位圆环、FOV 范围圆环、回放状态显示、待机/就绪双色瞄准点
+- **录制**：绑键式宏录制（逐帧 usercmd 回放，自动跳过前导静止段）、手动创建点位（跳投/走投方向与时长/投掷模式）
 - **点位管理（右侧独立分组）**：地图选择 + 道具分类筛选 + **点位名称搜索**，滚轮翻页，行内改名与删除（直接写回数据文件）
 - **数据文件**：`helper_data.txt` 存放点位（de_dust2 / de_mirage / de_nuke 等），改名/删除/新增均保留原格式
+
+### FortniteDamage.lua — 堡垒之夜伤害数字
+
+原作者 **1-star**，汉化 + 资源内嵌整合。
+
+- **单文件**：190 张伤害数字贴图已内嵌进脚本（base64 + RLE 压缩），**无需再放 images 资源包**
+- 爆头/身体/护甲伤害数字，支持独立颜色、缩放、显示时长、垂直偏移
+- 四种动画样式：经典堡垒之夜 / 弹跳 / 漂浮 / 分裂
+- 按目标过滤：自己 / 队友 / 敌人
+- 内置状态组：Allow Insecure 开关 + 一键重载
+
+许可证：整合版本适用仓库根目录 CC BY-NC 4.0 许可证；原作权利归 1-star。
 
 ### spoof_hook.lua — 主菜单伪造套件（自主开发）
 
@@ -57,9 +69,10 @@
 
 - 转载/二次创作**必须注明出处**（作者 yry4399 + 本仓库链接）
 - **禁止商用**（不得出售、捆绑收费产品或以任何形式收费）
-- 例外：grenade_helper 移植部分权利归 [AMWRV6](https://github.com/Anybody4506/AMWRV6) 原作者；neverlose_core_newad_ffi.dll 权利归其原发行方
+- 例外：grenade_helper 移植部分权利归 [AMWRV6](https://github.com/Anybody4506/AMWRV6) 原作者；FortniteDamage 原作权利归 1-star；neverlose_core_newad_ffi.dll 权利归其原发行方
 
 ## 致谢
 
 - AMWRV6 / Anybody4506 — grenade_helper 原作
+- 1-star — FortniteDamage 原作
 - zdmar — 自定义刷屏功能原作
