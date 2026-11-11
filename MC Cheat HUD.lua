@@ -430,19 +430,18 @@ local function draw_keystrokes(dt, scale, f, sw_, sh_, down, am)
         local p = key_p[i]
         if target > p then
             p = p + dt / PRESS_IN
-        else
+        elseif target < p then
             p = p - dt / PRESS_OUT
         end
         if p > 1 then p = 1 elseif p < 0 then p = 0 end
         key_p[i] = p
     end
     for i = 1, 2 do
-        local target = 0
-        if down[5 + i] then target = 1 end
+        local target = down[5 + i] and 1 or 0
         local p = mouse_p[i]
         if target > p then
             p = p + dt / 0.05
-        else
+        elseif target < p then
             p = p - dt / 0.10
         end
         if p > 1 then p = 1 elseif p < 0 then p = 0 end
@@ -571,7 +570,7 @@ local function icon_dims(tex, s)
 end
 
 -- ── 武器分类表（key = 归一化短名）────────────────────────────────────────────
-local function W(name, rank, short) return { name, rank, short or name } end
+local function W(name, rank, short, pord) return { name, rank, short or name, pord } end
 local WEAPONS = {
     ak47 = W("AK-47", 1), aug = W("AUG", 1), famas = W("法玛斯", 1),
     galilar = W("加利尔 AR", 1), m4a1 = W("M4A4", 1), sg556 = W("SG 553", 1),
@@ -585,15 +584,15 @@ local WEAPONS = {
     glock = W("格洛克 18 型", 2), p250 = W("P250", 2), tec9 = W("Tec-9", 2),
     usp_silencer = W("USP 消音型", 2), uspsilencer = W("USP 消音型", 2),
     cz75a = W("CZ75", 2), revolver = W("R8 左轮手枪", 2), hkp2000 = W("P2000", 2),
-    hegrenade = W("手雷", 9, "手雷"), flashbang = W("闪光弹", 9, "闪光"),
-    smokegrenade = W("烟雾弹", 9, "烟雾"), decoygrenade = W("诱饵弹", 9, "诱饵"),
-    decoy = W("诱饵弹", 9, "诱饵"),
-    molotovgrenade = W("燃烧瓶", 9, "火瓶"), molotov = W("燃烧瓶", 9, "火瓶"),
-    incgrenade = W("燃烧弹", 9, "燃烧"), incendiarygrenade = W("燃烧弹", 9, "燃烧"),
-    tagrenade = W("探测手雷", 9, "探测"), snowball = W("雪球", 9, "雪球"),
-    c4 = W("C4", 9, "C4"),
+    hegrenade = W("手雷", 9, "手雷", 4), flashbang = W("闪光弹", 9, "闪光", 3),
+    smokegrenade = W("烟雾弹", 9, "烟雾", 1), decoygrenade = W("诱饵弹", 9, "诱饵", 2),
+    decoy = W("诱饵弹", 9, "诱饵", 2),
+    molotovgrenade = W("燃烧瓶", 9, "火瓶", 0), molotov = W("燃烧瓶", 9, "火瓶", 0),
+    incgrenade = W("燃烧弹", 9, "燃烧", 0), incendiarygrenade = W("燃烧弹", 9, "燃烧", 0),
+    tagrenade = W("探测手雷", 9, "探测", 6), snowball = W("雪球", 9, "雪球", 7),
+    c4 = W("C4", 9, "C4", 8),
     taser = W("电击枪", 3), zeusx27 = W("电击枪", 3), zeus = W("电击枪", 3),
-    defuser = W("拆弹钳", 9, "钳子"), defusekit = W("拆弹钳", 9, "钳子"),
+    defuser = W("拆弹钳", 9, "钳子", 9), defusekit = W("拆弹钳", 9, "钳子", 9),
     knife = W("匕首", 3), knife_t = W("匕首", 3), bayonet = W("刺刀", 3),
 }
 
@@ -629,19 +628,19 @@ end
 
 local function weapon_meta(s)
     local w = WEAPONS[s]
-    if w ~= nil then return w[1], w[2], w[3] end
+    if w ~= nil then return w[1], w[2], w[3], w[4] end
     if string.find(s, "molotov", 1, true) ~= nil or string.find(s, "incendiary", 1, true) ~= nil then
-        return "燃烧瓶", 9, "火瓶"
+        return "燃烧瓶", 9, "火瓶", 0
     end
-    if string.find(s, "hegrenade", 1, true) ~= nil then return "手雷", 9, "手雷" end
-    if string.find(s, "flash", 1, true) ~= nil then return "闪光弹", 9, "闪光" end
-    if string.find(s, "smoke", 1, true) ~= nil then return "烟雾弹", 9, "烟雾" end
-    if string.find(s, "decoy", 1, true) ~= nil then return "诱饵弹", 9, "诱饵" end
+    if string.find(s, "hegrenade", 1, true) ~= nil then return "手雷", 9, "手雷", 4 end
+    if string.find(s, "flash", 1, true) ~= nil then return "闪光弹", 9, "闪光", 3 end
+    if string.find(s, "smoke", 1, true) ~= nil then return "烟雾弹", 9, "烟雾", 1 end
+    if string.find(s, "decoy", 1, true) ~= nil then return "诱饵弹", 9, "诱饵", 2 end
     if string.find(s, "tagrenade", 1, true) ~= nil or string.find(s, "sonar", 1, true) ~= nil then
-        return "探测手雷", 9, "探测"
+        return "探测手雷", 9, "探测", 6
     end
-    if string.find(s, "snowball", 1, true) ~= nil then return "雪球", 9, "雪球" end
-    if string.find(s, "defus", 1, true) ~= nil then return "拆弹钳", 9, "钳子" end
+    if string.find(s, "snowball", 1, true) ~= nil then return "雪球", 9, "雪球", 7 end
+    if string.find(s, "defus", 1, true) ~= nil then return "拆弹钳", 9, "钳子", 9 end
     if string.find(s, "knife", 1, true) ~= nil or string.find(s, "bayonet", 1, true) ~= nil then
         return "匕首", 3, "匕首"
     end
@@ -834,7 +833,7 @@ local function collect_weapons(me, f, dt)
                 local s = wclassify(w, norm_cls(raw_cls))
                 local row = row_map[s]
                 if row == nil then
-                    local nm, rank, short = weapon_meta(s)
+                    local nm, rank, short, pord = weapon_meta(s)
                     local is_knife = string.find(s, "knife", 1, true) ~= nil
                         or string.find(s, "bayonet", 1, true) ~= nil
                     local is_taser = string.find(s, "taser", 1, true) ~= nil
@@ -849,7 +848,7 @@ local function collect_weapons(me, f, dt)
                         for k = 1, #al do row.icon_names[#row.icon_names + 1] = al[k] end
                     end
                     row.show = (rank >= 1 and rank <= 3)
-                    row.pord = i
+                    row.pord = pord or i
                     local nw = name_w_cache[row.name]
                     if nw == nil then
                         nw = text_w(f.name, f.name_size, row.name, 60)
@@ -861,7 +860,6 @@ local function collect_weapons(me, f, dt)
                 end
                 row.seen = true
                 row.ent = w
-                if row.strip then row.pord = i end
             end
         end
     end
