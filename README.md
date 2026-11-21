@@ -73,6 +73,27 @@
 
 - **2026-11-21**：加入全境封锁HUD（APHRODITE 全息风格），与 MC HUD 共用总控件，可同时启用；侧边栏与文件名统一为 HUD Misc
 
+### media_player_wyy.lua — 网易云音乐播放器（侧边栏版 / 唱片 HUD）
+
+移植并改造自 Starlose 的 `netease_lyric_fade.lua`（网易云在线播放 + 唱片 HUD）与 Eagle × Spotify 的浮窗播放器，侧边栏名 **网易云音乐**，全中文界面。播放面板停靠在作弊菜单边缘，分「播放 / 歌词 / 浮窗」三个分页，配置自动持久化。
+
+- **搜索**：支持关键词、拼音、歌曲 ID，走网易云 `cloudsearch` 接口，结果列表点选即可播放；显示当前「将播放」来源，避免搜索结果与歌单曲目混淆
+- **歌单**：输入网易云 UID 拉取用户歌单 → 载入曲目列表 → 整单播放；支持「收藏当前」把歌曲加入本地收藏
+- **播放控制**：播放选中 / 上一首 / 播放暂停 / 下一首 / 停止，音乐音量 0-100，实时显示进度 `当前 / 总时长`；自动下一首、随机播放、单曲循环；播放暂停键、上一首键、下一首键三个独立绑键，可自定义
+- **屏幕歌词**：屏幕中间大歌词，字号 16-56 可选，水平 / 垂直位置可调，文字色与高亮色独立设置，支持发光（强度 / 扩散 / 跟随文字色 / 独立发光色）、±3000ms 歌词偏移、逐字卡拉 OK 高亮、韩文缺字形时自动转罗马音
+- **世界歌词**：歌词钉在 3D 空间某点，走动 / 转身时按透视移动，也可切换为屏幕固定；支持每句随机换位、逐字出场（唱到哪字出哪字）、跟随节拍跳动（手动 BPM / 自动测 BPM，可调跳动幅度、放大比例、跳动时长）、距离 / 左右偏移 / 高度 / 字号 / 字体颜色 / 发光 / 淡入淡出时间，并提供「钉在面前」「清除锚点」按钮
+- **浮窗（唱片 HUD）**：可拖动、可缩放的媒体窗口，显示封面、歌名、歌手与歌词；进度条支持拖动跳转（DirectShow `IMediaSeeking`，运行时自动探测虚表索引）；支持窗口缩放 70%-150%、边缘轮廓波形与音频响应发光、深色波形背景、歌词字号 / 水平垂直偏移 / 不透明度、垂直布局、多种播放器样式、一键重置窗口位置
+- **封面加载**：优先读取 `scripts/images/netease/<歌曲id>.jpg`，缺失时向网易云 CDN 请求未压缩 BMP，在 Lua 内解析 BMP 头并转为 RGBA 纹理（纯内存加载，无需外部图片资源），同时把封面写到 `data/music/cover_<id>.jpg` 备份
+- **数据源（全部走网易云自己的接口）**：搜索 `/api/cloudsearch/pc`、直链 `/api/song/enhance/player/url`、歌词 `/api/song/lyric`、详情 `/api/song/detail`、歌单 `/api/user/playlist` + `v6/playlist/detail`；直链无版权/VIP 限制时自动回退 Meting 代理与 `song/media/outer/url`，交给 DirectShow 跟随 302
+- **Cookie 与 VIP**：VIP 歌曲需要登录 Cookie；Cookie 放 `scripts/data/music/cookie.txt`，也可在「播放 → Cookie 与设置」中从剪贴板一键导入或重新读取
+- **字体**：中文 / 韩文字体从 `scripts/fonts` 加载（`msyh.ttc`、`malgun.ttf` 等），并内置系统字体兜底；不放置字体也能运行，只是韩文可能缺字形
+- **状态与自检**：显示引擎类型、播放状态、Cookie 状态；提供 Allow Insecure 开关与「应用并立即重载脚本」、Cookie 重载 / 导入、韩文字体自检、网络 / 解码自检；带调试日志 `data/music/debug.log`
+- **依赖**：**必须开启 Allow Insecure**（DirectShow 播放依赖 ffi，联网依赖 http，Cookie / 封面 / 配置读写依赖 file），无需任何外部图片资源
+
+更新日志：
+
+- **2026-11-21**：发布侧边栏版网易云音乐播放器：侧边栏面板（播放 / 歌词 / 浮窗三分页）+ 浮窗唱片 HUD；封面支持 BMP 内存解析；进度条拖动跳转；播放暂停 / 上一首 / 下一首独立绑键；世界歌词支持节拍跳动与自动测 BPM
+
 ### Angel Misc.lua — 天使光环 / 移动拖尾 / 挂机防踢
 
 移植自 Neverlose CSGO 脚本 **XFL.Misc V4.7.4**，侧边栏改名 Angel Misc，全中文界面：
@@ -136,7 +157,8 @@
 
 1. 将需要的 `.lua` 脚本放入 `C:\neverwin\scripts\`
 2. `helper_data.txt` 放入 `C:\neverwin\scripts\data\`（仅 grenade_helper 需要）
-3. 在 Neverwin 脚本列表中启用，并勾选 **Allow Insecure**（MC Cheat HUD / HUD Misc 无需勾选）
+3. 在 Neverwin 脚本列表中启用，并勾选 **Allow Insecure**（MC Cheat HUD / HUD Misc 无需勾选；media_player_wyy 必须勾选）
+4. media_player_wyy 的 VIP 歌曲需登录 Cookie：放到 `C:\neverwin\scripts\data\music\cookie.txt`，或在面板中从剪贴板导入；中 / 韩文字体可选放入 `C:\neverwin\scripts\fonts\`
 
 ## 许可证
 
@@ -152,3 +174,5 @@
 - 1-star — FortniteDamage 原作
 - zdmar — 自定义刷屏功能原作
 - 小凤梨1337 — MC Cheat HUD 移植鸣谢
+- Starlose（lua.nlcrack.cc）— media_player_wyy 网易云播放 / 唱片 HUD 原作
+- gera289 / 1star — Eagle × Spotify 浮窗播放器原作
