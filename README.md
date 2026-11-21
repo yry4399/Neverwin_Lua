@@ -59,6 +59,20 @@
 
 最近更新：修复按下按键时颜色高频闪烁的问题（按住常亮）；底部道具栏固定顺序（燃烧瓶 → 烟雾 → 诱饵 → 闪光 → 手雷 → 探测手雷 → 雪球 → C4 → 拆弹钳）。
 
+### HUD Misc.lua — HUD 整合（MC HUD + 全境封锁 HUD）
+
+由 MC Cheat HUD 合并 APHRODITE 全息 HUD，侧边栏名 **HUD Misc**，全中文界面：
+
+- **总控件**：多选「全境封锁HUD / MC HUD」，可单独使用，也可同时开启
+- **全境封锁 HUD**：武器面板（左/右位置、缩放）、中心数据簇（屏幕/武器锚点、武器位移跟随、护甲图标）、道具面板（空槽位显示、缩放）、风格自定义（主色/次色/强调色/背景色、扫描线、闪烁、浮动、文字辉光、四角括号）、毛玻璃背景与面板拖拽
+- **MC HUD**：Minecraft 风格按键块（WASD / 空格 / 鼠标 + CPS）、武器状态面板与底部道具栏（游戏内置图标）、缩放 / 透明度 / 颜色自定义
+- **游戏 HUD 隐藏**：底部状态条、武器列表、网络遥测、小地图、比分、热身时间、击杀信息、金钱、聊天（Panorama 实现，卸载自动还原）
+- **零依赖**：无需 Allow Insecure、无需任何资源文件，单文件即用
+
+更新日志：
+
+- **2026-11-21**：加入全境封锁HUD（APHRODITE 全息风格），与 MC HUD 共用总控件，可同时启用；侧边栏与文件名统一为 HUD Misc
+
 ### Angel Misc.lua — 天使光环 / 移动拖尾 / 挂机防踢
 
 移植自 Neverlose CSGO 脚本 **XFL.Misc V4.7.4**，侧边栏改名 Angel Misc，全中文界面：
@@ -122,7 +136,7 @@
 
 1. 将需要的 `.lua` 脚本放入 `C:\neverwin\scripts\`
 2. `helper_data.txt` 放入 `C:\neverwin\scripts\data\`（仅 grenade_helper 需要）
-3. 在 Neverwin 脚本列表中启用，并勾选 **Allow Insecure**（MC Cheat HUD 无需勾选）
+3. 在 Neverwin 脚本列表中启用，并勾选 **Allow Insecure**（MC Cheat HUD / HUD Misc 无需勾选）
 
 ## 许可证
 
