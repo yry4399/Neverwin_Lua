@@ -153,6 +153,14 @@
 
 脚本运行所需的 FFI 支持库，放置到 Neverwin 安装目录（通常为 `C:\neverwin\`）。
 
+[下载 neverlose_core_newad_ffi.dll](neverlose_core_newad_ffi.dll)
+
+当前版本：
+
+- 已恢复菜单广告，使用原始 `newad.png`，按 **1029×930** 原尺寸显示，不缩放或改变比例
+- 菜单昵称固定为 **Awa Subaru**，头像使用内嵌的 `test.jpg`
+- 保留 FFI 修复，并屏蔽资料热更新，避免固定昵称和头像被覆盖
+
 ## 安装
 
 1. 将需要的 `.lua` 脚本放入 `C:\neverwin\scripts\`
