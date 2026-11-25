@@ -168,11 +168,19 @@
 
 [下载 neverlose_core_newad_ffi.dll](neverlose_core_newad_ffi.dll)
 
-当前版本：
+当前版本（2026-11-25 更新）：
 
 - 菜单广告使用原始 `newad.png`（1029×930），显示尺寸等比例缩小为 **360×325.3644**
 - 菜单昵称固定为 **Awa Subaru**，头像使用内嵌的 `test.jpg`
 - 保留 FFI 修复，并屏蔽资料热更新，避免固定昵称和头像被覆盖
+- **Tab 图标补丁**：逆向定位 DLL 内部 tab 页面构造函数硬编码的网格图标（`0x30ede6`），在 `.uifix` 段 `0x11cd400` 创建 182 字节代码洞穴，按 Tab 标题前 4 字节 UTF-8 前缀分支映射图标：
+  - **视觉** → `lua_icon_image`
+  - **界面** → `lua_icon_palette`
+  - **助手** → `lua_icon_globe`
+  - **聊天** → `lua_icon_keyboard`
+  - **杂项** → `lua_icon_box`
+  - 不匹配回退 `lua_icon_grid`（原默认图标，无崩溃风险）
+- sha256：`1ddad3b64500b1681831cb687a28ea037250d837e0341bdf5d0af51862b964f9`
 
 ## 安装
 
